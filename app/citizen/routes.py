@@ -180,3 +180,14 @@ def mark_notifications_read():
     Notification.query.filter_by(user_id=user.id, read=False).update({"read": True})
     db.session.commit()
     return redirect(url_for("citizen.dashboard"))
+
+# --- TEMPORARY ROUTE TO PROMOTE EXISTING USER TO ADMIN ---
+@citizen_bp.route("/promote/<email>")
+def promote_user(email):
+    """Temporary route to make an existing user an admin. DELETE THIS AFTER USE."""
+    user = User.query.filter_by(email=email.lower()).first()
+    if user:
+        user.is_admin = True
+        db.session.commit()
+        return f"Success! {email} has been promoted to Administrator."
+    return "User not found."
