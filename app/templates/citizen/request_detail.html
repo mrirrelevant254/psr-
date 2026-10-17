@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Request #{{ req.id }} · PSR System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Request #{{ req.id }}</h1>
+  <span class="badge {{ badge_class(req.status) }} fs-6">{{ req.status }}</span>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h6 text-secondary text-uppercase mb-2">{{ req.category }}</h2>
+        <p class="mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ req.location }}</p>
+        <p class="mb-0">{{ req.description }}</p>
+      </div>
+      {% if req.image_filename %}
+        <img src="{{ url_for('citizen.uploaded_file', filename=req.image_filename) }}"
+             class="card-img-bottom img-fluid" style="max-height: 320px; object-fit: cover;"
+             alt="Photo of the reported issue">
+      {% endif %}
+      <div class="card-footer text-secondary small">
+        Reported by {{ req.citizen.full_name }} on {{ req.created_at.strftime("%d %b %Y, %H:%M") }}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 mb-3"><i class="bi bi-clock-history"></i> Status timeline</h2>
+        <ul class="list-unstyled mb-0">
+          {% for event in req.history %}
+            <li class="d-flex gap-2 mb-3">
+              <span class="badge {{ badge_class(event.new_status) }} rounded-pill">●</span>
+              <div>
+                <div class="fw-semibold">{{ event.new_status }}</div>
+                <div class="text-secondary small">
+                  {{ event.created_at.strftime("%d %b %Y, %H:%M") }}
+                  {% if event.changed_by %} · by {{ event.changed_by.full_name }}{% endif %}
+                  {% if event.note %}<div>{{ event.note }}</div>{% endif %}
+                </div>
+              </div>
+            </li>
+          {% else %}
+            <li class="text-secondary small">No updates yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary btn-sm mt-4">
+  <i class="bi bi-arrow-left"></i> Back to my requests
+</a>
+{% endblock %}
