@@ -1,3 +1,16 @@
+<div align="center">
+  <h1>🏛️ Murang'a County Public Service Request System</h1>
+  <p><strong>Mini eCitizen Platform built with Flask</strong></p>
+  <p>
+    <a href="https://github.com/mrirrelevant254/psr-"><strong>View Source Code on GitHub »</strong></a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python">
+    <img src="https://img.shields.io/badge/Framework-Flask-green.svg" alt="Flask">
+    <img src="https://img.shields.io/badge/UI-Bootstrap_5-purple.svg" alt="Bootstrap">
+  </p>
+</div>
+
 #  Murang'a County Public Service Request System (Mini eCitizen)
 
 A modern, secure web application designed for the **Murang'a County Government**. It allows citizens to report public service issues (water, roads, sanitation) and enables county administrators to track, manage, and resolve these requests through a transparent, audited workflow.
