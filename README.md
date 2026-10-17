@@ -1,10 +1,10 @@
-# 🏛️ Murang'a County Public Service Request System (Mini eCitizen)
+#  Murang'a County Public Service Request System (Mini eCitizen)
 
 A modern, secure web application designed for the **Murang'a County Government**. It allows citizens to report public service issues (water, roads, sanitation) and enables county administrators to track, manage, and resolve these requests through a transparent, audited workflow.
 
-## ✨ Key Features
+##  Key Features
 
-### 👤 Citizen Portal
+###  Citizen Portal
 * **Secure Authentication:** Registration and login with secure session management and hashed passwords.
 * **Request Submission:** Detailed forms including Category, Sub-County (Ward), Location, and Description.
 * **Strict Image Uploads:** Optional photo attachments with server-side validation (extension, MIME type, and magic-byte content checks) to prevent malicious file uploads.
@@ -12,7 +12,7 @@ A modern, secure web application designed for the **Murang'a County Government**
 * **In-App Notifications:** Bell icon with unread counts; citizens are automatically notified upon submission and every status change.
 * **Fullscreen Lightbox:** Click-to-zoom photo viewer for inspecting attached evidence.
 
-### 🛡️ Administrator Portal (Hidden URL)
+###  Administrator Portal (Hidden URL)
 * **Analytics Dashboard:** Horizontal progress bars (Open vs. Resolved, Requests by Category).
 * **SLA & Overdue Tracking:** Automatic red flagging and dashboard counters for requests open longer than 7 days.
 * **Request Queue:** Filtering by status, category, and sub-county, plus free-text search.
@@ -20,12 +20,12 @@ A modern, secure web application designed for the **Murang'a County Government**
 * **Data Export:** One-click CSV download of the filtered queue.
 * **Smart Routing:** Admins who use the citizen login page are redirected to the admin portal.
 
-## 🧰 Tech Stack
+##  Tech Stack
 * **Backend:** Python 3.10+, Flask, Flask-SQLAlchemy (SQLite)
 * **Frontend:** Bootstrap 5, Bootstrap Icons (via CDN)
 * **Security:** Werkzeug password hashing, Flask-WTF (CSRF protection), strict file upload validation, role-based access control (RBAC)
 
-## 📁 Project Structure
+## Project Structure
 ```text
 psr-system/
 ├── run.py                  # Application entry point
@@ -44,7 +44,7 @@ psr-system/
     └── static/css/         # Custom CSS overrides
 ```
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 **Prerequisites:** Python 3.10+ and Git.
 
@@ -73,7 +73,7 @@ python run.py
 
 > The SQLite database (`instance/`) and the `uploads/` folder are created automatically on first run.
 
-## 🌐 Portals & Access
+##  Portals & Access
 
 | Portal        | URL                                    | Visibility                  |
 |---------------|----------------------------------------|-----------------------------|
