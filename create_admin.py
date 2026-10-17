@@ -25,8 +25,8 @@ with app.app_context():
     else:
         full_name = input("Full name: ").strip()
         password = getpass.getpass("Password: ")
-        admin = User(email=email, full_name=full_name,
-                     password=password, is_admin=True)
+        admin = User(email=email, full_name=full_name, is_admin=True)
+        admin.set_password(password)
         db.session.add(admin)
         db.session.commit()
         print(f"Administrator '{email}' created.")

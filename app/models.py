@@ -1,5 +1,6 @@
 """Database models + workflow constants (single source of truth)."""
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db
 
@@ -54,6 +55,13 @@ class User(db.Model):
         "Notification", back_populates="user", cascade="all, delete-orphan"
     )
 
+    def set_password(self, password: str) -> None:
+        """Hash and store the password."""
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Verify a plain-text password against the stored hash."""
+        return check_password_hash(self.password, password)
     def __repr__(self):
         return f"<User {self.email} (admin={self.is_admin})>"
 

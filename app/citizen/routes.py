@@ -49,8 +49,10 @@ def register():
         user = User(
             email=form.email.data.strip(),
             full_name=form.full_name.data.strip(),
-            password=form.password.data,  # demo only: hash in production
+            
         )
+        user.set_password(form.password.data) 
+
         db.session.add(user)
         db.session.commit()
         flash("Registration successful. Please login.", "success")
@@ -63,7 +65,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.strip()).first()
-        if user and user.password == form.password.data:
+        if user and user.check_password(form.password.data):
             if user.is_admin:
                 # Admins have a separate portal. We guide them there only
                 # when they prove admin credentials - the link is never

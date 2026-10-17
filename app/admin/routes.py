@@ -41,7 +41,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.strip()).first()
-        if user and user.password == form.password.data and user.is_admin:
+        if user and user.check_password(form.password.data) and user.is_admin:
             session.clear()
             session["user_id"] = user.id
             session["is_admin"] = True
