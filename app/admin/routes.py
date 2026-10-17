@@ -1,6 +1,9 @@
 """Admin routes: analytics dashboard, request queue, status workflow."""
-from flask import (Blueprint, abort, flash, redirect, render_template,
-                   request, url_for)
+import csv
+import io
+
+from flask import (Blueprint, Response, abort, flash, redirect,
+                   render_template, request, url_for)
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -45,11 +48,11 @@ def dashboard():
     )
 
 
-@admin_bp.route("/requests")
-@login_required
-@admin_required
-def requests():
-    """Every request, with status/category filters and free-text search."""
+def build_queue_query():
+    """Apply status/category/search filters from the query string.
+
+    Shared by the queue page and the CSV export so both always agree.
+    """
     query = ServiceRequest.query
     status = request.args.get("status", "")
     category = request.args.get("category", "")
@@ -66,7 +69,15 @@ def requests():
             ServiceRequest.description.ilike(like),
             ServiceRequest.citizen.has(User.email.ilike(like)),
         ))
+    return query, status, category, search
 
+
+@admin_bp.route("/requests")
+@login_required
+@admin_required
+def requests():
+    """Every request, with status/category filters and free-text search."""
+    query, status, category, search = build_queue_query()
     items = query.order_by(ServiceRequest.created_at.desc()).all()
     return render_template(
         "admin/requests.html",
@@ -76,6 +87,32 @@ def requests():
         search=search,
         statuses=RequestStatus.ORDER,
         categories=RequestCategory.ALL,
+    )
+
+
+@admin_bp.route("/requests/export.csv")
+@login_required
+@admin_required
+def export_csv():
+    """Download the currently filtered queue as an Excel-friendly CSV."""
+    query, _status, _category, _search = build_queue_query()
+    items = query.order_by(ServiceRequest.created_at.desc()).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["ID", "Citizen", "Email", "Category", "Location",
+                     "Description", "Status", "Created", "Updated"])
+    for r in items:
+        writer.writerow([
+            r.id, r.citizen.full_name, r.citizen.email, r.category, r.location,
+            r.description, r.status,
+            r.created_at.strftime("%Y-%m-%d %H:%M"),
+            r.updated_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=requests.csv"},
     )
 
 

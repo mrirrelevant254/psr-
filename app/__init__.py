@@ -3,7 +3,7 @@
 Keeps configuration, extension init and blueprint registration in one
 readable place, and makes the app easy to test.
 """
-from flask import Flask
+from flask import Flask, render_template
 
 from config import BASE_DIR, Config
 from app.extensions import csrf, db, login_manager
@@ -69,5 +69,16 @@ def create_app(config_class=Config) -> Flask:
         db.session.add(admin)
         db.session.commit()
         click.echo(f"Admin '{email}' created.")
+
+    # -------------------------------------------------------- error pages
+    @app.errorhandler(403)
+    def forbidden(_error):
+        """Friendly 'access denied' page (e.g. citizen visits /admin)."""
+        return render_template("errors/403.html"), 403
+
+    @app.errorhandler(404)
+    def not_found(_error):
+        """Friendly 'not found' page."""
+        return render_template("errors/404.html"), 404
 
     return app
