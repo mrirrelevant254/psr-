@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Admin analytics · PSR System{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-4"><i class="bi bi-speedometer2"></i> Analytics overview</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm text-center"><div class="card-body">
+      <div class="fs-3 fw-bold">{{ stats.total }}</div>
+      <div class="text-secondary small">Total requests</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm text-center border-warning"><div class="card-body">
+      <div class="fs-3 fw-bold text-warning">{{ stats.open }}</div>
+      <div class="text-secondary small">Open cases</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm text-center border-primary"><div class="card-body">
+      <div class="fs-3 fw-bold text-primary">{{ stats.in_progress }}</div>
+      <div class="text-secondary small">In progress</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm text-center border-success"><div class="card-body">
+      <div class="fs-3 fw-bold text-success">{{ stats.resolved }}</div>
+      <div class="text-secondary small">Resolved</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 mb-3">Open vs resolved</h2>
+      <canvas id="statusChart" height="220"></canvas>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 mb-3">Requests per category</h2>
+      <canvas id="categoryChart" height="220"></canvas>
+    </div></div>
+  </div>
+</div>
+
+<a href="{{ url_for('admin.requests') }}" class="btn btn-primary btn-sm mt-4">
+  <i class="bi bi-table"></i> Go to request queue
+</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  // Data injected server-side; |tojson keeps it JSON-safe.
+  const statusData = {{ status_chart | tojson }};
+  const categoryData = {{ category_counts | tojson }};
+
+  new Chart(document.getElementById("statusChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(statusData),
+      datasets: [{
+        data: Object.values(statusData),
+        backgroundColor: ["#ffc107", "#0d6efd", "#198754"],  // matches Pending/In Progress/Resolved
+      }],
+    },
+    options: { plugins: { legend: { position: "bottom" } } },
+  });
+
+  new Chart(document.getElementById("categoryChart"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(categoryData),
+      datasets: [{ label: "Requests", data: Object.values(categoryData), backgroundColor: "#0d6efd" }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+    },
+  });
+</script>
+{% endblock %}

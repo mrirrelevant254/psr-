@@ -1,8 +1,10 @@
 """Small shared helpers used across blueprints."""
 from datetime import datetime, timezone
+from functools import wraps
 from pathlib import Path
 
-from flask import current_app, flash
+from flask import abort, current_app, flash
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
@@ -15,6 +17,16 @@ def flash_form_errors(form: FlaskForm) -> None:
         for error in errors:
             label = getattr(form, field_name).label.text
             flash(f"{label}: {error}", "danger")
+
+
+def admin_required(view):
+    """Allow only logged-in admins; everyone else gets HTTP 403."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
 
 
 # ------------------------------------------------------------------ uploads

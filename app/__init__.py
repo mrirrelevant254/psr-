@@ -36,7 +36,7 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(admin_bp, url_prefix="/admin")  # /admin/...
 
     # Flask-Login: load the user object from the session id.
-    from app.models import User
+    from app.models import User, UserRole
 
     @login_manager.user_loader
     def load_user(user_id: str):
@@ -45,5 +45,29 @@ def create_app(config_class=Config) -> Flask:
     # Dev convenience: create tables on first run.
     with app.app_context():
         db.create_all()
+
+    # ---------------------------------------------------------- CLI tooling
+    @app.cli.command("create-admin")
+    def create_admin():
+        """Create/promote an admin (run:  flask --app run create-admin)."""
+        import click
+
+        email = click.prompt("Admin e-mail").strip().lower()
+        existing = User.query.filter_by(email=email).first()
+        if existing:
+            if existing.is_admin:
+                click.echo("That user is already an admin.")
+            else:
+                existing.role = UserRole.ADMIN
+                db.session.commit()
+                click.echo(f"Promoted {email} to admin.")
+            return
+        name = click.prompt("Full name", default="Administrator")
+        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
+        admin = User(full_name=name, email=email, role=UserRole.ADMIN)
+        admin.set_password(password)
+        db.session.add(admin)
+        db.session.commit()
+        click.echo(f"Admin '{email}' created.")
 
     return app
