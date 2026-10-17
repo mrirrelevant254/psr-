@@ -16,6 +16,13 @@
 
 A modern, secure web application designed for the **Murang'a County Government**. It allows citizens to report public service issues (water, roads, sanitation) and enables county administrators to track, manage, and resolve these requests through a transparent, audited workflow.
 
+### Live Demo
+**[Click here to view the live application](https://psr-muranga.onrender.com)**
+
+- Citizen portal: https://psr-muranga.onrender.com/
+- Admin portal (hidden): https://psr-muranga.onrender.com/admin/login
+
+
 ## Key Features
 
 ### Citizen Portal
