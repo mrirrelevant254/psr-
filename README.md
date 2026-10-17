@@ -4,7 +4,7 @@ A Flask web application where **citizens** report public-service issues
 (broken streetlights, water problems, garbage collection…) and **admins**
 drive them through a `Pending → In Progress → Resolved` workflow.
 
-## ✨ Features
+## Features
 
 | Area | What it does |
 |---|---|
@@ -17,11 +17,11 @@ drive them through a `Pending → In Progress → Resolved` workflow.
 | Workflow | Status advances one step at a time, **enforced server-side** |
 | Bonus | CSV export, audit trail, Chart.js analytics, search/filters, CLI admin seeder, CSRF protection, custom 403/404 pages |
 
-## 🧰 Tech stack
+## Tech stack
 Python 3.10+ · Flask · Flask-SQLAlchemy (SQLite) · Flask-Login · Flask-WTF ·
 Bootstrap 5 + Bootstrap Icons · Chart.js (all front-end assets via CDN)
 
-## 📁 Project structure
+## Project structure
 ```
 psr-system/
 ├── run.py                  # entry point (python run.py)
@@ -42,7 +42,7 @@ psr-system/
     └── static/css/         # custom CSS on top of Bootstrap
 ```
 
-## 🚀 Setup
+## Setup
 
 ```bash
 # 1. Clone / copy the project, then:
@@ -61,14 +61,14 @@ python run.py
 Open **http://127.0.0.1:5000** — register a citizen through the UI; admins are
 created only via the CLI command above.
 
-## 🔁 Request workflow
+## Request workflow
 ```
 Pending  →  In Progress  →  Resolved
    (admin advances one step per action; every change is recorded
     in status_history with who/when/optional note)
 ```
 
-## 🧪 Manual test guide
+## Manual test guide
 1. Register → login as citizen → submit 2 requests (one with a photo).
 2. Badges show *Pending*; detail page shows the timeline.
 3. Login as admin → Analytics shows open vs resolved + charts.
