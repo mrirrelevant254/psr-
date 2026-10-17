@@ -77,8 +77,5 @@ Pending  →  In Progress  →  Resolved
 6. Citizen visits `/admin/` → friendly **403** page.
 7. Admin clicks **CSV** → filtered spreadsheet downloads.
 
-## 📸 Screenshots
-*(optional: add a `docs/screenshots/` folder and embed images here)*
-
-## 👤 Author
-<your name> — built as a graded project (code quality · functionality · UI/UX · docs · bonus).
+##  Author
+Geofry mwangi burugu
