@@ -64,19 +64,27 @@
 
     {#- RIGHT column: status workflow + SLA summary -#}
     <div class="col-lg-5">
+      
+      {#- NEW: Enforced Workflow Button -#}
       <div class="card shadow-sm"><div class="card-body">
         <h2 class="h6 mb-3"><i class="bi bi-arrow-repeat"></i> Update status</h2>
-        <form method="post" action="{{ url_for('admin.update_status', request_id=req.id) }}">
-          <div class="mb-3">
-            <label class="form-label small text-secondary">New status</label>
-            <select name="status" class="form-select">
-              {% for s in statuses %}
-                <option value="{{ s }}" {% if s == req.status %}selected{% endif %}>{{ s }}</option>
-              {% endfor %}
-            </select>
+        
+        {% if req.next_status %}
+          <form method="post" action="{{ url_for('admin.update_status', request_id=req.id) }}">
+            {#- Hidden input ensures the admin can only advance to the exact next step -#}
+            <input type="hidden" name="status" value="{{ req.next_status }}">
+            <div class="d-grid">
+              <button class="btn btn-dark btn-lg">
+                <i class="bi bi-arrow-right-circle"></i> Advance to {{ req.next_status }}
+              </button>
+            </div>
+          </form>
+        {% else %}
+          <div class="alert alert-success mb-0 text-center">
+            <i class="bi bi-check-circle-fill"></i> This request is fully resolved.
           </div>
-          <button class="btn btn-dark w-100">Apply status change</button>
-        </form>
+        {% endif %}
+        
         <div class="form-text mt-2">
           The citizen is notified automatically and the change is recorded in the audit trail.
         </div>

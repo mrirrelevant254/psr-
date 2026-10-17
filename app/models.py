@@ -1,18 +1,20 @@
 """Database models + workflow constants (single source of truth)."""
 from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 
 
 class RequestCategory:
     """The service categories a citizen can request."""
+    STREETLIGHT = "Streetlight"
     WATER = "Water"
+    GARBAGE = "Garbage"
     ROADS = "Roads"
-    SANITATION = "Sanitation"
-    HEALTH = "Health"
+    DRAINAGE = "Drainage"
     OTHER = "Other"
-    ALL = (WATER, ROADS, SANITATION, HEALTH, OTHER)
+    ALL = (STREETLIGHT, WATER, GARBAGE, ROADS, DRAINAGE, OTHER)
 
 
 class SubCounty:
@@ -62,6 +64,7 @@ class User(db.Model):
     def check_password(self, password: str) -> bool:
         """Verify a plain-text password against the stored hash."""
         return check_password_hash(self.password, password)
+
     def __repr__(self):
         return f"<User {self.email} (admin={self.is_admin})>"
 
@@ -75,10 +78,10 @@ class ServiceRequest(db.Model):
         db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
     )
     category = db.Column(db.String(40), nullable=False)
-    sub_county = db.Column(db.String(20), nullable=False, index=True)  # Feature 8
+    sub_county = db.Column(db.String(20), nullable=False, index=True)
     location = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    image_filename = db.Column(db.String(255), nullable=True)  # optional photo
+    image_filename = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), nullable=False, default=RequestStatus.PENDING)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(
@@ -99,6 +102,17 @@ class ServiceRequest(db.Model):
         return datetime.utcnow() > self.created_at + timedelta(
             days=RequestStatus.SLA_DAYS
         )
+
+    @property
+    def next_status(self):
+        """Get the next valid status in the workflow (Pending -> In Progress -> Resolved)."""
+        try:
+            current_index = RequestStatus.ORDER.index(self.status)
+            if current_index + 1 < len(RequestStatus.ORDER):
+                return RequestStatus.ORDER[current_index + 1]
+        except ValueError:
+            pass
+        return None
 
     def __repr__(self):
         return f"<ServiceRequest #{self.id} [{self.status}]>"
