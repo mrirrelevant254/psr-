@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🏛️ Murang'a County Public Service Request System</h1>
+  <h1>Murang'a County Public Service Request System</h1>
   <p><strong>Mini eCitizen Platform built with Flask</strong></p>
   <p>
     <a href="https://github.com/mrirrelevant254/psr-"><strong>View Source Code on GitHub »</strong></a>
