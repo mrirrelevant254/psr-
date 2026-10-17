@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Citizen login · PSR Murang'a{% endblock %}
+{% block body %}
+<div class="container py-5" style="max-width: 460px;">
+  <div class="text-center mb-4">
+    <i class="bi bi-government fs-1 text-success"></i>
+    <h1 class="h4 mt-2">Public Service Requests</h1>
+    <p class="text-secondary small mb-0">Murang'a County · Citizen portal</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control", placeholder="you@example.com") }}
+      </div>
+      <div class="mb-3">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control") }}
+      </div>
+      {{ form.submit(class="btn btn-success w-100") }}
+    </form>
+    <div class="text-center mt-3 small">
+      No account? <a href="{{ url_for('citizen.register') }}">Register here</a>
+    </div>
+  </div></div>
+</div>
+{% endblock %}

@@ -1,139 +1,126 @@
 """Database models + workflow constants (single source of truth)."""
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 
-from flask_login import UserMixin
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from app.extensions import db
+from app import db
 
 
-# ---------------------------------------------------------------- constants
-class UserRole:
-    """Possible values for User.role."""
-    CITIZEN = "citizen"
-    ADMIN = "admin"
+class RequestCategory:
+    """The service categories a citizen can request."""
+    WATER = "Water"
+    ROADS = "Roads"
+    SANITATION = "Sanitation"
+    HEALTH = "Health"
+    OTHER = "Other"
+    ALL = (WATER, ROADS, SANITATION, HEALTH, OTHER)
+
+
+class SubCounty:
+    """The 7 sub-counties of Murang'a County."""
+    KANDARA = "Kandara"
+    KANGEMA = "Kangema"
+    KIHARU = "Kiharu"
+    MARAGWA = "Maragwa"
+    MATHIOYA = "Mathioya"
+    GATANGA = "Gatanga"
+    MURANGA = "Murang'a"
+    ALL = (KANDARA, KANGEMA, KIHARU, MARAGWA, MATHIOYA, GATANGA, MURANGA)
 
 
 class RequestStatus:
-    """Status workflow: Pending -> In Progress -> Resolved."""
+    """The workflow a request moves through."""
     PENDING = "Pending"
     IN_PROGRESS = "In Progress"
     RESOLVED = "Resolved"
     ORDER = (PENDING, IN_PROGRESS, RESOLVED)
-    OPEN_STATUSES = (PENDING, IN_PROGRESS)        # used by analytics
+
+    SLA_DAYS = 7  # Feature 3: requests open longer than this are "Overdue"
 
 
-class RequestCategory:
-    """Pre-defined categories shown in the submit form."""
-    STREETLIGHT = "Broken Streetlight"
-    WATER = "Water Issue"
-    GARBAGE = "Garbage Collection"
-    ROADS = "Road / Pavement"
-    OTHER = "Other"
-    ALL = (STREETLIGHT, WATER, GARBAGE, ROADS, OTHER)
-
-
-def utcnow() -> datetime:
-    """Timezone-aware 'now' used as the default for every timestamp."""
-    return datetime.now(timezone.utc)
-
-
-# ------------------------------------------------------------------- models
-class User(UserMixin, db.Model):
+class User(db.Model):
     """A registered citizen or administrator."""
-
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(10), nullable=False, default=UserRole.CITIZEN)
-    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    full_name = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     requests = db.relationship(
-        "ServiceRequest", back_populates="citizen",
-        cascade="all, delete-orphan",
+        "ServiceRequest", back_populates="citizen", cascade="all, delete-orphan"
+    )
+    notifications = db.relationship(
+        "Notification", back_populates="user", cascade="all, delete-orphan"
     )
 
-    def set_password(self, password: str) -> None:
-        """Store a hashed (never plain-text) password."""
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password: str) -> bool:
-        """Verify a candidate password against the stored hash."""
-        return check_password_hash(self.password_hash, password)
-
-    @property
-    def is_admin(self) -> bool:
-        return self.role == UserRole.ADMIN
-
-    def __repr__(self) -> str:
-        return f"<User {self.email} ({self.role})>"
+    def __repr__(self):
+        return f"<User {self.email} (admin={self.is_admin})>"
 
 
 class ServiceRequest(db.Model):
     """One public-service issue reported by a citizen."""
-
     __tablename__ = "service_requests"
 
     id = db.Column(db.Integer, primary_key=True)
-    citizen_id = db.Column(db.Integer, db.ForeignKey("users.id"),
-                           nullable=False, index=True)
+    citizen_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
     category = db.Column(db.String(40), nullable=False)
-    location = db.Column(db.String(120), nullable=False)
+    sub_county = db.Column(db.String(20), nullable=False, index=True)  # Feature 8
+    location = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    image_filename = db.Column(db.String(255))            # optional photo
-    status = db.Column(db.String(20), nullable=False,
-                       default=RequestStatus.PENDING, index=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False,
-                           default=utcnow, onupdate=utcnow)
+    image_filename = db.Column(db.String(255), nullable=True)  # optional photo
+    status = db.Column(db.String(20), nullable=False, default=RequestStatus.PENDING)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     citizen = db.relationship("User", back_populates="requests")
-    history = db.relationship(
-        "StatusHistory", back_populates="request",
-        cascade="all, delete-orphan",
-        order_by="StatusHistory.created_at",
+    status_history = db.relationship(
+        "StatusChange", back_populates="request", cascade="all, delete-orphan"
     )
 
     @property
-    def is_open(self) -> bool:
-        """True while the case is unresolved (analytics uses this)."""
-        return self.status in RequestStatus.OPEN_STATUSES
+    def is_overdue(self):
+        """True when the request is still open and older than the SLA."""
+        open_statuses = (RequestStatus.PENDING, RequestStatus.IN_PROGRESS)
+        if self.status not in open_statuses:
+            return False
+        return datetime.utcnow() > self.created_at + timedelta(
+            days=RequestStatus.SLA_DAYS
+        )
 
-    @property
-    def next_status(self):
-        """Next workflow step, or None when already Resolved."""
-        idx = RequestStatus.ORDER.index(self.status)
-        return RequestStatus.ORDER[idx + 1] if idx + 1 < len(RequestStatus.ORDER) else None
-
-    def update_status(self, new_status: str, changed_by: "User", note: str = "") -> None:
-        """Move to *new_status* and record the change in the audit trail."""
-        old = self.status
-        self.status = new_status
-        db.session.add(StatusHistory(
-            request=self, old_status=old, new_status=new_status,
-            note=note, changed_by=changed_by,
-        ))
-
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"<ServiceRequest #{self.id} [{self.status}]>"
 
 
-class StatusHistory(db.Model):
-    """Audit trail of status changes (powers the timeline UI - bonus)."""
-
-    __tablename__ = "status_history"
+class StatusChange(db.Model):
+    """Audit trail: every status change is recorded."""
+    __tablename__ = "status_changes"
 
     id = db.Column(db.Integer, primary_key=True)
-    request_id = db.Column(db.Integer, db.ForeignKey("service_requests.id"),
-                           nullable=False)
-    old_status = db.Column(db.String(20))
+    request_id = db.Column(
+        db.Integer, db.ForeignKey("service_requests.id"), nullable=False, index=True
+    )
+    old_status = db.Column(db.String(20), nullable=True)
     new_status = db.Column(db.String(20), nullable=False)
-    note = db.Column(db.String(255))
-    changed_by_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    changed_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    changed_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    request = db.relationship("ServiceRequest", back_populates="history")
+    request = db.relationship("ServiceRequest", back_populates="status_history")
     changed_by = db.relationship("User")
+
+
+class Notification(db.Model):
+    """Feature 1: in-app notifications for citizens."""
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    message = db.Column(db.String(300), nullable=False)
+    read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship("User", back_populates="notifications")

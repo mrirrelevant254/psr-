@@ -1,36 +1,63 @@
-"""WTForms form for submitting a service request."""
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from wtforms import SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length
+from wtforms import (PasswordField, SelectField, StringField, SubmitField,
+                     TextAreaField)
+from wtforms.validators import DataRequired, Length, ValidationError
 
-from app.models import RequestCategory
+from app.models import RequestCategory, SubCounty
+
+IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"]
+
+
+class RegisterForm(FlaskForm):
+    full_name = StringField("Full name", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Length(max=120)])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
+    submit = SubmitField("Register")
+
+
+class LoginForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Login")
 
 
 class RequestForm(FlaskForm):
-    """Category + location + description, with an optional photo."""
-
     category = SelectField(
-        "Category",
-        choices=[(c, c) for c in RequestCategory.ALL],
+        "Category", choices=[(c, c) for c in RequestCategory.ALL],
         validators=[DataRequired()],
     )
-    location = StringField(
-        "Location",
-        validators=[DataRequired(), Length(max=120)],
-        render_kw={"placeholder": "e.g. Kenyatta Ave, near the market"},
+    sub_county = SelectField(
+        "Sub-County", choices=[(s, s) for s in SubCounty.ALL],
+        validators=[DataRequired()],
     )
-    description = TextAreaField(
-        "Description",
-        validators=[DataRequired(), Length(max=2000)],
-        render_kw={"rows": 4, "placeholder": "Describe the issue..."},
-    )
-    # A FileField with only FileAllowed is optional; adding FileRequired()
-    # would make the photo mandatory.
+    location = StringField("Location", validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField("Description", validators=[DataRequired(), Length(max=2000)])
+
+    # Optional photo: FileAllowed alone keeps the field optional
+    # (FileRequired() would force an upload).
     image = FileField(
         "Photo (optional)",
-        validators=[
-            FileAllowed(["png", "jpg", "jpeg", "webp"], "Images only (png/jpg/webp)."),
-        ],
+        validators=[FileAllowed(IMAGE_EXTENSIONS,
+                                "Only image files are allowed (PNG, JPG, JPEG, WEBP).")],
     )
     submit = SubmitField("Submit request")
+
+    def validate_image(self, field):
+        """Server-side proof the upload is really an image.
+
+        1) MIME type must start with 'image/'.
+        2) The first bytes (magic numbers) must match PNG / JPEG / WEBP,
+           so a renamed .exe or .txt is rejected even if its extension lies.
+        """
+        if field.data is None or not field.data.filename:
+            return                                    # nothing uploaded -> fine
+        if not (field.data.mimetype or "").startswith("image/"):
+            raise ValidationError("Only image files are allowed.")
+        header = field.data.stream.read(12)
+        field.data.stream.seek(0)                     # rewind for saving later
+        is_png = header[:4] == b"\x89PNG"
+        is_jpg = header[:3] == b"\xff\xd8\xff"
+        is_webp = header[:4] == b"RIFF" and header[8:12] == b"WEBP"
+        if not (is_png or is_jpg or is_webp):
+            raise ValidationError("File content is not a valid PNG, JPG or WEBP image.")

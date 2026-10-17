@@ -1,12 +1,10 @@
 {% extends "base.html" %}
-{% block title %}404 · PSR System{% endblock %}
-
-{% block content %}
-<div class="text-center py-5">
-  <div class="display-1 fw-bold text-primary">404</div>
-  <h1 class="h4">Page not found</h1>
-  <p class="text-secondary">The page you're looking for doesn't exist (anymore).</p>
-  <a href="{{ url_for('citizen.dashboard') if current_user.is_authenticated else url_for('auth.login') }}"
-     class="btn btn-primary">Take me home</a>
+{% block title %}404 · PSR Murang'a{% endblock %}
+{% block body %}
+<div class="container py-5 text-center">
+  <i class="bi bi-signpost-split fs-1 text-secondary"></i>
+  <h1 class="h4 mt-3">404 · Page not found</h1>
+  <p class="text-secondary">The page you requested does not exist.</p>
+  <a href="{{ url_for('citizen.login') }}" class="btn btn-success btn-sm">Go to login</a>
 </div>
 {% endblock %}

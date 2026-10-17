@@ -1,84 +1,49 @@
-"""Application factory.
+import os
 
-Keeps configuration, extension init and blueprint registration in one
-readable place, and makes the app easy to test.
-"""
 from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
 
-from config import BASE_DIR, Config
-from app.extensions import csrf, db, login_manager
+db = SQLAlchemy()
 
 
-def create_app(config_class=Config) -> Flask:
-    """Create and fully configure the Flask application."""
+def create_app():
     app = Flask(__name__)
-    app.config.from_object(config_class)
+    app.config["SECRET_KEY"] = "psr-secret-key-change-me"
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+        base_dir, "..", "instance", "psr.db"
+    )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # Make sure runtime folders exist (safe on every OS).
-    (BASE_DIR / "instance").mkdir(parents=True, exist_ok=True)
-    app.config["UPLOAD_FOLDER"].mkdir(parents=True, exist_ok=True)
+        # --- Upload settings (optional request photos) ---
+    app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "..", "uploads")
+    app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024   # reject files > 5 MB
+    app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "webp"}
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Extensions
     db.init_app(app)
-    login_manager.init_app(app)
-    csrf.init_app(app)
-        # Expose the status -> badge colour mapping to every template.
-    from app.utils import badge_class
-    app.jinja_env.globals["badge_class"] = badge_class
 
-    # Blueprints (one per role)
-    from app.auth.routes import auth_bp
-    from app.citizen.routes import citizen_bp
     from app.admin.routes import admin_bp
+    from app.citizen.routes import citizen_bp
 
-    app.register_blueprint(auth_bp)                        # /login, /register
-    app.register_blueprint(citizen_bp)                     # /, /requests/...
-    app.register_blueprint(admin_bp, url_prefix="/admin")  # /admin/...
+    app.register_blueprint(citizen_bp)
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
-    # Flask-Login: load the user object from the session id.
-    from app.models import User, UserRole
-
-    @login_manager.user_loader
-    def load_user(user_id: str):
-        return db.session.get(User, int(user_id))
-
-    # Dev convenience: create tables on first run.
-    with app.app_context():
-        db.create_all()
-
-    # ---------------------------------------------------------- CLI tooling
-    @app.cli.command("create-admin")
-    def create_admin():
-        """Create/promote an admin (run:  flask --app run create-admin)."""
-        import click
-
-        email = click.prompt("Admin e-mail").strip().lower()
-        existing = User.query.filter_by(email=email).first()
-        if existing:
-            if existing.is_admin:
-                click.echo("That user is already an admin.")
-            else:
-                existing.role = UserRole.ADMIN
-                db.session.commit()
-                click.echo(f"Promoted {email} to admin.")
-            return
-        name = click.prompt("Full name", default="Administrator")
-        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
-        admin = User(full_name=name, email=email, role=UserRole.ADMIN)
-        admin.set_password(password)
-        db.session.add(admin)
-        db.session.commit()
-        click.echo(f"Admin '{email}' created.")
-
-    # -------------------------------------------------------- error pages
     @app.errorhandler(403)
-    def forbidden(_error):
-        """Friendly 'access denied' page (e.g. citizen visits /admin)."""
+    def forbidden(_e):
         return render_template("errors/403.html"), 403
 
     @app.errorhandler(404)
-    def not_found(_error):
-        """Friendly 'not found' page."""
+    def not_found(_e):
         return render_template("errors/404.html"), 404
+
+    @app.errorhandler(413)
+    def file_too_large(_e):
+        return render_template("errors/413.html"), 413
+
+    with app.app_context():
+        from app import models  # noqa: F401
+
+        db.create_all()
 
     return app

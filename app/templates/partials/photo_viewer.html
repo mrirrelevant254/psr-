@@ -1,0 +1,48 @@
+{#- Reusable photo viewer: clickable thumbnail + fullscreen modal.
+    Expects a `req` object with image_filename. -#}
+{% if req.image_filename %}
+  <div class="col-12">
+    <span class="text-secondary">Attached photo:</span><br>
+
+    {#- Thumbnail: cursor + title hint that it is clickable -#}
+    <img src="{{ url_for('citizen.uploaded_file', filename=req.image_filename) }}"
+         class="img-fluid rounded mt-1 img-thumbnail"
+         style="max-height: 320px; cursor: zoom-in;"
+         alt="Photo of the reported issue"
+         title="Click to view fullscreen"
+         data-bs-toggle="modal" data-bs-target="#photoModal">
+    <div class="form-text">
+      <i class="bi bi-zoom-in"></i> Click the photo to view it fullscreen.
+    </div>
+  </div>
+
+  {#- Fullscreen lightbox modal (Bootstrap JS handles open/close) -#}
+  <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-dark bg-opacity-75">
+        <div class="modal-header border-0">
+          <h2 class="modal-title h6 text-white">
+            <i class="bi bi-image"></i> Request #{{ req.id }} — attached photo
+          </h2>
+          <button type="button" class="btn-close btn-close-white"
+                  data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex align-items-center justify-content-center p-1">
+          <img src="{{ url_for('citizen.uploaded_file', filename=req.image_filename) }}"
+               class="img-fluid" style="max-height: 85vh; object-fit: contain;"
+               alt="Photo of the reported issue (full size)">
+        </div>
+        <div class="modal-footer border-0 justify-content-between">
+          {#- Opens the raw file: browser-native pinch / ctrl+scroll zoom -#}
+          <a href="{{ url_for('citizen.uploaded_file', filename=req.image_filename) }}"
+             target="_blank" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-up-right"></i> Open original (zoom in new tab)
+          </a>
+          <button class="btn btn-light btn-sm" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}

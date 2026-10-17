@@ -1,87 +1,63 @@
 {% extends "base.html" %}
-{% block title %}Request #{{ req.id }} · PSR System{% endblock %}
+{% block title %}Request #{{ req.id }} · PSR Murang'a{% endblock %}
+{% block body %}
+<div class="container py-5" style="max-width: 720px;">
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h4 mb-0">Request #{{ req.id }}</h1>
-  <span class="badge {{ badge_class(req.status) }} fs-6">{{ req.status }}</span>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <h2 class="h6 text-secondary text-uppercase mb-2">{{ req.category }}</h2>
-        <p class="mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ req.location }}</p>
-        <p class="mb-0">{{ req.description }}</p>
-      </div>
-      {% if req.image_filename %}
-        <img src="{{ url_for('citizen.uploaded_file', filename=req.image_filename) }}"
-             class="card-img-bottom img-fluid" style="max-height: 320px; object-fit: cover;"
-             alt="Photo of the reported issue">
+  {#- Page header: overdue flag + current status badge -#}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 mb-0">Request #{{ req.id }}</h1>
+    <div>
+      {% if req.is_overdue %}
+        <span class="badge text-bg-danger me-1">
+          <i class="bi bi-exclamation-triangle"></i> Overdue
+        </span>
       {% endif %}
-      <div class="card-footer text-secondary small">
-        Reported by {{ req.citizen.full_name }} on {{ req.created_at.strftime("%d %b %Y, %H:%M") }}
-      </div>
+      <span class="badge text-bg-{% if req.status == 'Resolved' %}success{% elif req.status == 'In Progress' %}primary{% else %}secondary{% endif %} fs-6">
+        {{ req.status }}
+      </span>
     </div>
   </div>
 
-  <div class="col-lg-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h6 mb-3"><i class="bi bi-clock-history"></i> Status timeline</h2>
-        <ul class="list-unstyled mb-0">
-          {% for event in req.history %}
-            <li class="d-flex gap-2 mb-3">
-              <span class="badge {{ badge_class(event.new_status) }} rounded-pill">●</span>
-              <div>
-                <div class="fw-semibold">{{ event.new_status }}</div>
-                <div class="text-secondary small">
-                  {{ event.created_at.strftime("%d %b %Y, %H:%M") }}
-                  {% if event.changed_by %} · by {{ event.changed_by.full_name }}{% endif %}
-                  {% if event.note %}<div>{{ event.note }}</div>{% endif %}
-                </div>
-              </div>
-            </li>
-          {% else %}
-            <li class="text-secondary small">No updates yet.</li>
-          {% endfor %}
-        </ul>
-      </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <h2 class="h6 mb-3">Request details</h2>
+    <div class="row g-3 small">
+      <div class="col-md-6"><span class="text-secondary">Category:</span> {{ req.category }}</div>
+      <div class="col-md-6"><span class="text-secondary">Sub-County:</span> {{ req.sub_county }}</div>
+      <div class="col-md-6"><span class="text-secondary">Location:</span> {{ req.location }}</div>
+      <div class="col-md-6"><span class="text-secondary">Submitted:</span> {{ req.created_at.strftime("%d %b %Y, %H:%M") }}</div>
+      <div class="col-12"><span class="text-secondary">Description:</span><br>{{ req.description }}</div>
+
+      {#- Optional photo: clickable thumbnail + fullscreen lightbox -#}
+      {% include "partials/photo_viewer.html" %}
     </div>
-  </div>
+  </div></div>
+
+  <div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6 mb-3"><i class="bi bi-clock-history"></i> Status history</h2>
+    {% if req.status_history %}
+      <ul class="list-unstyled mb-0 small">
+        {% for change in req.status_history %}
+          <li class="border-bottom py-2">
+            <span class="text-secondary">{{ change.changed_at.strftime("%d %b %Y, %H:%M") }}</span> ·
+            {{ change.old_status or "New" }} <i class="bi bi-arrow-right"></i>
+            <strong>{{ change.new_status }}</strong>
+            <span class="text-secondary">(by {{ change.changed_by.full_name }})</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-secondary small mb-0">No status changes yet.</p>
+    {% endif %}
+  </div></div>
+
+  <a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary btn-sm mt-3">
+    <i class="bi bi-arrow-left"></i> Back to dashboard
+  </a>
 </div>
-
-<a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary btn-sm mt-4">
-  {% if current_user.is_admin %}
-  <div class="card shadow-sm border-primary mt-4">
-    <div class="card-body">
-      <h2 class="h6 mb-3"><i class="bi bi-shield-lock"></i> Admin actions</h2>
-      {% if req.next_status %}
-        <form method="POST" class="row g-2 align-items-end"
-              action="{{ url_for('admin.update_status', request_id=req.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="col-md-7">
-            <label class="form-label small text-secondary">Update note (optional)</label>
-            <input type="text" name="note" class="form-control" maxlength="255"
-                   placeholder="e.g. Crew dispatched">
-          </div>
-          <div class="col-md-5 d-grid">
-            <button class="btn btn-primary">
-              <i class="bi bi-arrow-right-circle"></i> Mark as {{ req.next_status }}
-            </button>
-          </div>
-        </form>
-      {% else %}
-        <p class="mb-0 text-success"><i class="bi bi-check-circle"></i> This request is already resolved.</p>
-      {% endif %}
-    </div>
-  </div>
-{% endif %}
-
-<a href="{{ url_for('admin.requests') if current_user.is_admin else url_for('citizen.dashboard') }}"
-   class="btn btn-outline-secondary btn-sm mt-4">
-  <i class="bi bi-arrow-left"></i> Back
-</a>
-</a>
 {% endblock %}

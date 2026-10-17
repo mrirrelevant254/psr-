@@ -1,0 +1,20 @@
+{#- Section tabs rendered on every admin page: guaranteed navigation. -#}
+<ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}"
+       href="{{ url_for('admin.dashboard') }}">
+      <i class="bi bi-speedometer2"></i> Analytics
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if request.endpoint == 'admin.requests' }}"
+       href="{{ url_for('admin.requests') }}">
+      <i class="bi bi-table"></i> Request queue
+    </a>
+  </li>
+  <li class="nav-item ms-auto">
+    <a class="nav-link" href="{{ url_for('admin.export_csv', **request.args) }}">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+  </li>
+</ul>

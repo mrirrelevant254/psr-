@@ -1,86 +1,101 @@
 {% extends "base.html" %}
-{% block title %}Request queue · PSR System{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h4 mb-0"><i class="bi bi-table"></i> Request queue</h1>
+{% block title %}Request queue · PSR Murang'a{% endblock %}
+{% block body %}
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <span class="navbar-brand"><i class="bi bi-list-check"></i> Request queue</span>
     <div class="d-flex gap-2">
-    <a href="{{ url_for('admin.export_csv', **request.args) }}" class="btn btn-outline-success btn-sm">
-      <i class="bi bi-download"></i> CSV
-    </a>
-    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary btn-sm">Analytics</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+      <a href="{{ url_for('admin.export_csv') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-download"></i> Export CSV
+      </a>
+      <a href="{{ url_for('admin.logout') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
   </div>
-</div>
+</nav>
 
-{#- Filters via GET so results are shareable/bookmarkable -#}
-<form method="GET" class="row g-2 mb-4">
-  <div class="col-md-4">
-    <input type="search" name="q" value="{{ search }}" class="form-control"
-           placeholder="Search location / description / citizen e-mail">
-  </div>
-  <div class="col-md-3">
-    <select name="status" class="form-select">
-      <option value="">All statuses</option>
-      {% for s in statuses %}
-        <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <select name="category" class="form-select">
-      <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2 d-grid">
-    <button class="btn btn-primary"><i class="bi bi-funnel"></i> Filter</button>
-  </div>
-</form>
+<div class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
 
-{% if requests %}
-  <div class="card shadow-sm">
-    <div class="table-responsive">
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All statuses</option>
+        {% for s in statuses %}
+          <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="category" class="form-select">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="sub_county" class="form-select">
+        <option value="">All Sub-Counties</option>
+        {% for s in sub_counties %}
+          <option value="{{ s }}" {% if s == sub_county %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <div class="input-group">
+        <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Search...">
+        <button class="btn btn-dark"><i class="bi bi-search"></i></button>
+      </div>
+    </div>
+  </form>
+
+  {% if requests %}
+    <div class="table-responsive shadow-sm bg-white rounded">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>#</th><th>Citizen</th><th>Category</th><th>Location</th>
-            <th>Status</th><th>Submitted</th><th class="text-end">Actions</th>
+            <th>ID</th><th>Citizen</th><th>Category</th><th>Sub-County</th>
+            <th>Location</th><th>Status</th><th>Created</th><th></th>
           </tr>
         </thead>
         <tbody>
-          {% for req in requests %}
-            <tr>
-              <td>{{ req.id }}</td>
-              <td>{{ req.citizen.full_name }}
-                  <div class="text-secondary small">{{ req.citizen.email }}</div></td>
-              <td>{{ req.category }}</td>
-              <td class="small">{{ req.location }}</td>
-              <td><span class="badge {{ badge_class(req.status) }}">{{ req.status }}</span></td>
-              <td class="small text-secondary">{{ req.created_at.strftime("%d %b %Y") }}</td>
-              <td class="text-end">
-                <a href="{{ url_for('citizen.request_detail', request_id=req.id) }}"
-                   class="btn btn-sm btn-outline-secondary">View</a>
-                {% if req.next_status %}
-                  <form method="POST" class="d-inline"
-                        action="{{ url_for('admin.update_status', request_id=req.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn btn-sm btn-{{ 'primary' if req.next_status == 'In Progress' else 'success' }}">
-                      → {{ req.next_status }}
-                    </button>
-                  </form>
+          {% for r in requests %}
+            <tr class="{% if r.is_overdue %}table-danger{% endif %}">
+              <td>#{{ r.id }}</td>
+              <td>{{ r.citizen.full_name }}<div class="text-secondary small">{{ r.citizen.email }}</div></td>
+              <td>{{ r.category }}</td>
+              <td>{{ r.sub_county }}</td>
+              <td>{{ r.location }}</td>
+              <td>
+                <span class="badge text-bg-{% if r.status == 'Resolved' %}success{% elif r.status == 'In Progress' %}primary{% else %}secondary{% endif %}">
+                  {{ r.status }}
+                </span>
+                {% if r.is_overdue %}
+                  <span class="badge text-bg-danger"><i class="bi bi-exclamation-triangle"></i> Overdue</span>
                 {% endif %}
+              </td>
+              <td class="small">{{ r.created_at.strftime("%d %b %Y") }}</td>
+              <td>
+                <a href="{{ url_for('admin.request_detail', request_id=r.id) }}" class="btn btn-dark btn-sm">
+                  Open
+                </a>
               </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
-{% else %}
-  <div class="card shadow-sm"><div class="card-body p-5 text-center text-secondary">
-    <i class="bi bi-search fs-1 d-block mb-2"></i> No requests match the current filters.
-  </div></div>
-{% endif %}
+  {% else %}
+    <div class="alert alert-secondary">No requests match the current filters.</div>
+  {% endif %}
+</div>
 {% endblock %}

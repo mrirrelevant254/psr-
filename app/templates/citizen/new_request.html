@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}New request · PSR Murang'a{% endblock %}
+{% block body %}
+<div class="container py-5" style="max-width: 620px;">
+  <h1 class="h5 mb-4"><i class="bi bi-plus-lg"></i> Submit a service request</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card shadow-sm"><div class="card-body p-4">
+    {#- enctype is REQUIRED for file uploads -#}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row g-3">
+        <div class="col-md-6">
+          {{ form.category.label(class="form-label") }}
+          {{ form.category(class="form-select") }}
+        </div>
+        <div class="col-md-6">
+          {{ form.sub_county.label(class="form-label") }}
+          {{ form.sub_county(class="form-select") }}
+        </div>
+        <div class="col-12">
+          {{ form.location.label(class="form-label") }}
+          {{ form.location(class="form-control", placeholder="e.g. Gitugi ward, near the market") }}
+        </div>
+        <div class="col-12">
+          {{ form.description.label(class="form-label") }}
+          {{ form.description(class="form-control", rows="5") }}
+        </div>
+        <div class="col-12">
+          {{ form.image.label(class="form-label") }}
+          {{ form.image(class="form-control") }}
+          <div class="form-text">Optional · images only (PNG, JPG, JPEG, WEBP) · max 5 MB</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        {{ form.submit(class="btn btn-success") }}
+        <a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

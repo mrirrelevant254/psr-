@@ -1,13 +1,10 @@
 {% extends "base.html" %}
-{% block title %}403 · PSR System{% endblock %}
-
-{% block content %}
-<div class="text-center py-5">
-  <div class="display-1 fw-bold text-primary">403</div>
-  <h1 class="h4">Access denied</h1>
-  <p class="text-secondary">You don't have permission to view this page.</p>
-  <a href="{{ url_for('admin.dashboard') if current_user.is_authenticated and current_user.is_admin
-             else (url_for('citizen.dashboard') if current_user.is_authenticated else url_for('auth.login')) }}"
-     class="btn btn-primary">Take me home</a>
+{% block title %}403 · PSR Murang'a{% endblock %}
+{% block body %}
+<div class="container py-5 text-center">
+  <i class="bi bi-shield-x fs-1 text-danger"></i>
+  <h1 class="h4 mt-3">403 · Forbidden</h1>
+  <p class="text-secondary">You do not have permission to view this page.</p>
+  <a href="{{ url_for('citizen.login') }}" class="btn btn-success btn-sm">Go to login</a>
 </div>
 {% endblock %}

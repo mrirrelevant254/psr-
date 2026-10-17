@@ -1,43 +1,94 @@
 {% extends "base.html" %}
-{% block title %}My requests · PSR System{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h4 mb-0"><i class="bi bi-list-check"></i> My service requests</h1>
-  <a href="{{ url_for('citizen.new_request') }}" class="btn btn-primary">
-    <i class="bi bi-plus-lg"></i> New request
-  </a>
-</div>
-
-{% if requests %}
-  <div class="list-group shadow-sm">
-    {% for req in requests %}
-      <a href="{{ url_for('citizen.request_detail', request_id=req.id) }}"
-         class="list-group-item list-group-item-action p-3">
-        <div class="d-flex justify-content-between gap-2">
-          <div>
-            <div class="fw-semibold">#{{ req.id }} · {{ req.category }}</div>
-            <div class="text-secondary small">
-              <i class="bi bi-geo-alt"></i> {{ req.location }} ·
-              {{ req.created_at.strftime("%d %b %Y, %H:%M") }}
-            </div>
-          </div>
-          <span class="badge {{ badge_class(req.status) }} align-self-center">{{ req.status }}</span>
-        </div>
+{% block title %}My dashboard · PSR Murang'a{% endblock %}
+{% block body %}
+<nav class="navbar navbar-dark bg-success">
+  <div class="container">
+    <span class="navbar-brand"><i class="bi bi-government"></i> PSR Murang'a</span>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-white small">
+        <i class="bi bi-person-circle"></i> {{ user.full_name }}
+      </span>
+      <a href="{{ url_for('citizen.logout') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right"></i> Logout
       </a>
-    {% endfor %}
+    </div>
   </div>
-{% else %}
-  <div class="card shadow-sm">
-    <div class="card-body p-5 text-center text-secondary">
-      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-      You haven't submitted any requests yet.
-      <div class="mt-3">
-        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('citizen.new_request') }}">
-          Submit your first request
-        </a>
+</nav>
+
+<div class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 mb-0">My service requests</h1>
+    <a href="{{ url_for('citizen.new_request') }}" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-lg"></i> New request
+    </a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      {% if requests %}
+        <div class="list-group shadow-sm">
+          {% for req in requests %}
+            <a href="{{ url_for('citizen.request_detail', request_id=req.id) }}"
+               class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between">
+                <div class="fw-semibold">#{{ req.id }} · {{ req.category }}</div>
+                <span class="badge text-bg-{% if req.status == 'Resolved' %}success{% elif req.status == 'In Progress' %}primary{% else %}secondary{% endif %}">
+                  {{ req.status }}
+                </span>
+              </div>
+              <div class="text-secondary small">
+                <i class="bi bi-geo-alt"></i> {{ req.sub_county }} · {{ req.location }} ·
+                {{ req.created_at.strftime("%d %b %Y, %H:%M") }}
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-secondary mb-0">
+          You have not submitted any requests yet.
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="small fw-semibold">
+            <i class="bi bi-bell"></i> Notifications
+          </span>
+          {% if unread %}
+            <span class="badge text-bg-danger">{{ unread }} new</span>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          {% if notifications %}
+            <ul class="list-unstyled mb-0">
+              {% for n in notifications %}
+                <li class="border-bottom px-3 py-2 small {% if not n.read %}bg-success-subtle{% endif %}">
+                  {{ n.message }}
+                  <div class="text-secondary" style="font-size: .75rem;">
+                    {{ n.created_at.strftime("%d %b %Y, %H:%M") }}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+            {% if unread %}
+              <form method="post" action="{{ url_for('citizen.mark_notifications_read') }}" class="p-2">
+                <button class="btn btn-outline-success btn-sm w-100">Mark all as read</button>
+              </form>
+            {% endif %}
+          {% else %}
+            <div class="p-3 text-secondary small">No notifications yet.</div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
-{% endif %}
+</div>
 {% endblock %}
