@@ -1,60 +1,39 @@
-"""Application factory. Keeps configuration, extension init, and blueprint registration clean."""
+"""Application factory."""
 import os
-
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-
 def create_app():
     app = Flask(__name__)
-    
-    # --- Core Configuration ---
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "psr-secret-key-change-me")
     
-    # --- Database Configuration (Render vs Local) ---
-    database_url = os.environ.get("DATABASE_URL")
-    
-    if database_url:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    else:
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(base_dir, "..", "instance", "psr.db")
-
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    # PythonAnywhere will use this SQLite database and it will persist forever!
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(base_dir, "..", "instance", "psr.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # --- Upload settings ---
-    base_dir = os.path.abspath(os.path.dirname(__file__))
     app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "..", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
     app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "webp"}
     
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    if not database_url:
-        os.makedirs(os.path.join(base_dir, "..", "instance"), exist_ok=True)
+    os.makedirs(os.path.join(base_dir, "..", "instance"), exist_ok=True)
 
     db.init_app(app)
 
     from app.citizen.routes import citizen_bp
     from app.admin.routes import admin_bp
-
     app.register_blueprint(citizen_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
     @app.errorhandler(403)
-    def forbidden(_e):
-        return render_template("errors/403.html"), 403
-
+    def forbidden(_e): return render_template("errors/403.html"), 403
     @app.errorhandler(404)
-    def not_found(_e):
-        return render_template("errors/404.html"), 404
-
+    def not_found(_e): return render_template("errors/404.html"), 404
     @app.errorhandler(413)
-    def file_too_large(_e):
-        return render_template("errors/413.html"), 413
+    def file_too_large(_e): return render_template("errors/413.html"), 413
 
     with app.app_context():
         from app import models
