@@ -1,35 +1,152 @@
 {% extends "base.html" %}
-{% block title %}Citizen login · PSR Murang'a{% endblock %}
+{% block title %}Citizen Login · Murang'a County{% endblock %}
+
 {% block body %}
-<div class="container py-5" style="max-width: 460px;">
-  <div class="text-center mb-4">
-    <i class="bi bi-government fs-1 text-success"></i>
-    <h1 class="h4 mt-2">Public Service Requests</h1>
-    <p class="text-secondary small mb-0">Murang'a County · Citizen portal</p>
-  </div>
+<style>
+  /* Custom styles to match the official Murang'a County portal design */
+  body {
+    background-color: #f4f7f6 !important; /* Light gray-blue background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+  
+  /* Hide the default navbar on the login page for a clean look */
+  .navbar { display: none !important; }
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
-    {% endfor %}
-  {% endwith %}
+  .login-card {
+    max-width: 480px;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
 
-  <div class="card shadow-sm"><div class="card-body p-4">
+  .county-logo {
+    max-height: 80px;
+    margin-bottom: 1rem;
+  }
+
+  .login-title {
+    color: #1e3a8a; /* Dark official blue */
+    font-weight: 800;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-subtitle-1 {
+    color: #2563eb; /* Brighter blue */
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .login-subtitle-2 {
+    color: #6b7280; /* Gray */
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    font-size: 1rem;
+  }
+
+  .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .btn-signin {
+    background-color: #1d4ed8; /* Official button blue */
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    transition: background-color 0.2s;
+  }
+
+  .btn-signin:hover {
+    background-color: #1e40af;
+  }
+
+  .login-links a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .login-links a:hover {
+    text-decoration: underline;
+  }
+
+  .login-footer-text {
+    color: #4b5563;
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+</style>
+
+<div class="container py-5">
+  <div class="card login-card mx-auto p-4 p-md-5">
+    <div class="text-center">
+      <!-- Replace 'logo.png' with your actual logo file in static/img/ -->
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Murang'a County Crest" class="county-logo">
+      
+      <h1 class="login-title">Citizen Login</h1>
+      <div class="login-subtitle-1">Murang'a County Government</div>
+      <div class="login-subtitle-2">Public Service Request Portal</div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} py-2 text-center small">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
     <form method="post" novalidate>
       {{ form.hidden_tag() }}
+      
       <div class="mb-3">
         {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control", placeholder="you@example.com") }}
+        {{ form.email(class="form-control", placeholder="your.email@example.com") }}
       </div>
+      
       <div class="mb-3">
         {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
+        {{ form.password(class="form-control", placeholder="••••••••") }}
       </div>
-      {{ form.submit(class="btn btn-success w-100") }}
+
+      <div class="d-flex justify-content-between login-links mb-2">
+        <a href="{{ url_for('citizen.register') }}">First time? Register here</a>
+        <a href="#">Forgot password?</a>
+      </div>
+
+      {{ form.submit(class="btn btn-primary btn-signin", value="Sign In") }}
     </form>
-    <div class="text-center mt-3 small">
-      No account? <a href="{{ url_for('citizen.register') }}">Register here</a>
+
+    <div class="text-center login-footer-text">
+      Don't have an account? <strong>Register as a citizen to submit and track service requests.</strong>
+      <br>
+      <a href="{{ url_for('citizen.index') }}" class="mt-2 d-inline-block" style="color: #2563eb; text-decoration: none;">
+        &larr; Back to Home
+      </a>
     </div>
-  </div></div>
+  </div>
 </div>
 {% endblock %}
