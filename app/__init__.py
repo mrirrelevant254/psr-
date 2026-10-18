@@ -13,32 +13,27 @@ def create_app():
     # --- Core Configuration ---
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "psr-secret-key-change-me")
     
-    # --- Database Configuration (Render vs Local) ---
-    database_url = os.environ.get("DATABASE_URL")
+    # --- Detect Vercel Environment ---
+    is_vercel = os.environ.get("VERCEL") == "1"
     
-    if database_url:
-        # Render provides 'postgres://', but SQLAlchemy requires 'postgresql+psycopg2://'
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    if is_vercel:
+        # Vercel uses /tmp for writable files
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/psr.db"
+        app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
     else:
         # Local fallback for your computer
         base_dir = os.path.abspath(os.path.dirname(__file__))
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(base_dir, "..", "instance", "psr.db")
+        app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "..", "uploads")
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # --- Upload settings (optional request photos) ---
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "..", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024   # reject files > 5 MB
     app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "webp"}
     
     # Create folders safely
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    if not database_url:
-        # Only create instance folder locally
-        os.makedirs(os.path.join(base_dir, "..", "instance"), exist_ok=True)
+    if not is_vercel:
+        os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "instance"), exist_ok=True)
 
     db.init_app(app)
 
@@ -64,7 +59,7 @@ def create_app():
 
     # --- Database Initialization ---
     with app.app_context():
-        from app import models  # noqa: F401 (ensures models are registered with SQLAlchemy)
+        from app import models  # noqa: F401
         db.create_all()
 
     return app
