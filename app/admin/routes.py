@@ -1,3 +1,4 @@
+"""Admin routes: login, dashboard, request queue, status updates, and CSV export."""
 import csv
 import io
 from datetime import datetime, timedelta
@@ -20,17 +21,18 @@ admin_bp = Blueprint("admin", __name__)
 
 
 def admin_required(view):
+    """Decorator to ensure only logged-in administrators can access a route."""
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not session.get("is_admin"):
             flash("Please login as an administrator.", "warning")
             return redirect(url_for("admin.login"))
         return view(*args, **kwargs)
-
     return wrapped
 
 
 def current_admin():
+    """Helper to get the current logged-in admin object."""
     if not session.get("is_admin"):
         return None
     return db.session.get(User, session["user_id"])
@@ -38,9 +40,10 @@ def current_admin():
 
 @admin_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Handle administrator login."""
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.strip()).first()
+        user = User.query.filter_by(email=form.email.data.strip().lower()).first()
         if user and user.check_password(form.password.data) and user.is_admin:
             session.clear()
             session["user_id"] = user.id
@@ -53,6 +56,7 @@ def login():
 
 @admin_bp.route("/logout")
 def logout():
+    """Clear session and log out the administrator."""
     session.clear()
     flash("Administrator logged out.", "info")
     return redirect(url_for("admin.login"))
@@ -61,19 +65,27 @@ def logout():
 @admin_bp.route("/dashboard")
 @admin_required
 def dashboard():
+    """Admin analytics dashboard with custom progress bars."""
     total = ServiceRequest.query.count()
+    
     open_count = ServiceRequest.query.filter(
         ServiceRequest.status.in_([RequestStatus.PENDING, RequestStatus.IN_PROGRESS])
     ).count()
+    
     resolved = ServiceRequest.query.filter_by(status=RequestStatus.RESOLVED).count()
 
-    # Feature 3: count overdue requests
+    # Specific counts for the stacked "Open vs resolved" progress bar
+    pending = ServiceRequest.query.filter_by(status=RequestStatus.PENDING).count()
+    in_progress = ServiceRequest.query.filter_by(status=RequestStatus.IN_PROGRESS).count()
+
+    # SLA Overdue calculation
     cutoff = datetime.utcnow() - timedelta(days=RequestStatus.SLA_DAYS)
     overdue = ServiceRequest.query.filter(
         ServiceRequest.status.in_([RequestStatus.PENDING, RequestStatus.IN_PROGRESS]),
         ServiceRequest.created_at < cutoff,
     ).count()
 
+    # Chart data (kept for fallback, though HTML now uses custom bars)
     status_chart = dict(
         db.session.query(ServiceRequest.status, func.count(ServiceRequest.id))
         .group_by(ServiceRequest.status).all()
@@ -88,9 +100,14 @@ def dashboard():
     )
 
     stats = {
-        "total": total, "open": open_count,
-        "resolved": resolved, "overdue": overdue,
+        "total": total, 
+        "open": open_count, 
+        "resolved": resolved, 
+        "overdue": overdue,
+        "pending": pending,       # Added for progress bar
+        "in_progress": in_progress # Added for progress bar
     }
+    
     return render_template(
         "admin/dashboard.html",
         stats=stats, status_chart=status_chart,
@@ -125,6 +142,7 @@ def build_queue_query():
 @admin_bp.route("/requests")
 @admin_required
 def requests():
+    """View the filtered request queue."""
     query, status, category, sub_county, search = build_queue_query()
     items = query.order_by(ServiceRequest.created_at.desc()).all()
     return render_template(
@@ -139,6 +157,7 @@ def requests():
 @admin_bp.route("/requests/export.csv")
 @admin_required
 def export_csv():
+    """Export the current filtered queue to a CSV file."""
     query, _status, _category, _sub_county, _search = build_queue_query()
     items = query.order_by(ServiceRequest.created_at.desc()).all()
 
@@ -162,6 +181,7 @@ def export_csv():
 @admin_bp.route("/requests/<int:request_id>")
 @admin_required
 def request_detail(request_id):
+    """View a specific request and its audit trail."""
     req = db.session.get(ServiceRequest, request_id)
     if req is None:
         flash("Request not found.", "danger")
@@ -174,27 +194,29 @@ def request_detail(request_id):
 @admin_bp.route("/requests/<int:request_id>/status", methods=["POST"])
 @admin_required
 def update_status(request_id):
+    """Update the status of a request (enforces one-way workflow)."""
     req = db.session.get(ServiceRequest, request_id)
     if req is None:
         flash("Request not found.", "danger")
         return redirect(url_for("admin.requests"))
 
     new_status = request.form.get("status", "")
-    if new_status not in RequestStatus.ORDER:
-        flash("Invalid status.", "danger")
-        return redirect(url_for("admin.request_detail", request_id=req.id))
-    if new_status == req.status:
-        flash("Request is already in that status.", "info")
+    
+    # Security check: ensure the requested status is the actual next step
+    if new_status != req.next_status:
+        flash("Invalid status transition.", "danger")
         return redirect(url_for("admin.request_detail", request_id=req.id))
 
     admin = current_admin()
     old_status = req.status
     req.status = new_status
+    
     db.session.add(StatusChange(
         request_id=req.id, old_status=old_status,
         new_status=new_status, changed_by_id=admin.id,
     ))
-    # Feature 1: notify the citizen about the status change
+    
+    # Notify the citizen
     db.session.add(Notification(
         user_id=req.citizen_id,
         message=f"Request #{req.id} ({req.category}) moved from {old_status} to {new_status}.",

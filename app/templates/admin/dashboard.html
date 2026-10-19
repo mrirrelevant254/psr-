@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Admin dashboard · PSR Murang'a{% endblock %}
+{% block title %}Admin Analytics · PSR Murang'a{% endblock %}
 {% block body %}
+
 <nav class="navbar navbar-dark bg-dark">
   <div class="container">
     <span class="navbar-brand"><i class="bi bi-shield-lock"></i> County Admin</span>
@@ -15,101 +16,143 @@
   </div>
 </nav>
 
-<div class="container py-4">
+<div class="container py-5">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
       <div class="alert alert-{{ category }} py-2">{{ message }}</div>
     {% endfor %}
   {% endwith %}
 
+  <!-- Top Stats Cards -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-      <div class="card shadow-sm text-center"><div class="card-body">
+      <div class="card shadow-sm text-center border-0"><div class="card-body">
         <div class="h3 mb-0">{{ stats.total }}</div>
         <div class="text-secondary small">Total requests</div>
       </div></div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card shadow-sm text-center"><div class="card-body">
+      <div class="card shadow-sm text-center border-0"><div class="card-body">
         <div class="h3 mb-0 text-primary">{{ stats.open }}</div>
         <div class="text-secondary small">Open</div>
       </div></div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card shadow-sm text-center"><div class="card-body">
+      <div class="card shadow-sm text-center border-0"><div class="card-body">
         <div class="h3 mb-0 text-success">{{ stats.resolved }}</div>
         <div class="text-secondary small">Resolved</div>
       </div></div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card shadow-sm text-center border-danger"><div class="card-body">
+      <div class="card shadow-sm text-center border-danger border-2"><div class="card-body">
         <div class="h3 mb-0 text-danger">{{ stats.overdue }}</div>
-        <div class="text-secondary small">
-          <i class="bi bi-exclamation-triangle"></i> Overdue (&gt;7 days)
-        </div>
+        <div class="text-secondary small">Overdue (&gt;7 days)</div>
       </div></div>
     </div>
   </div>
 
-  <div class="row g-3">
-    <div class="col-lg-5">
-      <div class="card shadow-sm h-100"><div class="card-body">
-        <h2 class="h6 mb-3">Open vs resolved</h2>
-        <canvas id="statusChart" height="220"></canvas>
-      </div></div>
+  <div class="row g-4">
+    
+    <!-- Open vs Resolved Card (Stacked Bar) -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Open vs resolved</h5>
+          
+          {% set total = stats.pending + stats.in_progress + stats.resolved %}
+          {% if total > 0 %}
+            <div class="progress mb-3" style="height: 20px; border-radius: 10px;">
+              {% if stats.pending > 0 %}
+                <div class="progress-bar bg-warning" style="width: {{ (stats.pending / total * 100) }}%"></div>
+              {% endif %}
+              {% if stats.in_progress > 0 %}
+                <div class="progress-bar bg-primary" style="width: {{ (stats.in_progress / total * 100) }}%"></div>
+              {% endif %}
+              {% if stats.resolved > 0 %}
+                <div class="progress-bar bg-success" style="width: {{ (stats.resolved / total * 100) }}%"></div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="progress mb-3" style="height: 20px; border-radius: 10px;"><div class="progress-bar bg-light" style="width: 100%"></div></div>
+          {% endif %}
+
+          <div class="d-flex gap-4 small flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded-circle bg-warning" style="width: 12px; height: 12px;"></span>
+              <span>Pending: {{ stats.pending }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded-circle bg-primary" style="width: 12px; height: 12px;"></span>
+              <span>In Progress: {{ stats.in_progress }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded-circle bg-success" style="width: 12px; height: 12px;"></span>
+              <span>Resolved: {{ stats.resolved }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col-lg-7">
-      <div class="card shadow-sm h-100"><div class="card-body">
-        <h2 class="h6 mb-3">Requests per category</h2>
-        <canvas id="categoryChart" height="220"></canvas>
-      </div></div>
+
+    <!-- By Category Card (Horizontal Bars) -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">By category</h5>
+          
+          {% set max_count = category_counts.values() | max if category_counts else 1 %}
+          {% if max_count == 0 %}{% set max_count = 1 %}{% endif %}
+
+          <div class="d-flex flex-column gap-3">
+            {% for cat in ['Streetlight', 'Water', 'Garbage', 'Roads', 'Drainage', 'Other'] %}
+              {% set count = category_counts.get(cat, 0) %}
+              {% set width = (count / max_count * 100) %}
+              
+              <div class="d-flex align-items-center">
+                <div class="col-4 small fw-semibold">{{ cat }}</div>
+                <div class="col-6">
+                  <div class="progress" style="height: 12px; border-radius: 6px; background-color: #e9ecef;">
+                    <div class="progress-bar bg-success" style="width: {{ width }}%; border-radius: 6px;"></div>
+                  </div>
+                </div>
+                <div class="col-2 text-end small fw-bold">{{ count }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- Cases per Sub-County (Same style) -->
     <div class="col-12">
-      <div class="card shadow-sm"><div class="card-body">
-        <h2 class="h6 mb-3">Cases per Sub-County</h2>
-        <canvas id="wardChart" height="120"></canvas>
-      </div></div>
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Cases per Sub-County</h5>
+          
+          {% set max_ward = ward_counts.values() | max if ward_counts else 1 %}
+          {% if max_ward == 0 %}{% set max_ward = 1 %}{% endif %}
+
+          <div class="d-flex flex-column gap-3">
+            {% for ward in ['Kandara', 'Kangema', 'Kiharu', 'Maragwa', 'Mathioya', 'Gatanga', "Murang'a"] %}
+              {% set count = ward_counts.get(ward, 0) %}
+              {% set width = (count / max_ward * 100) %}
+              
+              <div class="d-flex align-items-center">
+                <div class="col-3 small fw-semibold">{{ ward }}</div>
+                <div class="col-7">
+                  <div class="progress" style="height: 12px; border-radius: 6px; background-color: #e9ecef;">
+                    <div class="progress-bar bg-success" style="width: {{ width }}%; border-radius: 6px;"></div>
+                  </div>
+                </div>
+                <div class="col-2 text-end small fw-bold">{{ count }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script>
-  const statusData = {{ status_chart | tojson }};
-  new Chart(document.getElementById("statusChart"), {
-    type: "doughnut",
-    data: {
-      labels: Object.keys(statusData),
-      datasets: [{ data: Object.values(statusData), backgroundColor: ["#6c757d", "#0d6efd", "#198754"] }],
-    },
-    options: { plugins: { legend: { position: "bottom" } } },
-  });
-
-  const categoryData = {{ category_counts | tojson }};
-  new Chart(document.getElementById("categoryChart"), {
-    type: "bar",
-    data: {
-      labels: Object.keys(categoryData),
-      datasets: [{ label: "Requests", data: Object.values(categoryData), backgroundColor: "#0d6efd" }],
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-    },
-  });
-
-  const wardData = {{ ward_counts | tojson }};
-  new Chart(document.getElementById("wardChart"), {
-    type: "bar",
-    data: {
-      labels: Object.keys(wardData),
-      datasets: [{ label: "Cases", data: Object.values(wardData), backgroundColor: "#198754" }],
-    },
-    options: {
-      indexAxis: "y",
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } },
-    },
-  });
-</script>
 {% endblock %}
