@@ -1,6 +1,5 @@
-
 <div align="center">
-  <h1>Murang'a County Public Service Request System</h1>
+  <h1> Murang'a County Public Service Request System</h1>
   <p><strong>Mini eCitizen Platform built with Flask</strong></p>
   <p>
     <a href="https://github.com/mrirrelevant254/psr-"><strong>View Source Code on GitHub »</strong></a>
@@ -12,21 +11,18 @@
   </p>
 </div>
 
-#  Murang'a County Public Service Request System (Mini eCitizen)
+---
 
 A modern, secure web application designed for the **Murang'a County Government**. It allows citizens to report public service issues (water, roads, sanitation) and enables county administrators to track, manage, and resolve these requests through a transparent, audited workflow.
 
-### Live Demo
-**[Click here to view the live application](https://psr-muranga.onrender.com)**
+###  Live Demo
+**[Click here to view the live application](https://mrirrelevant.pythonanywhere.com)**
 
-- Citizen portal: https://psr-muranga.onrender.com/
-- Admin portal (hidden): https://psr-muranga.onrender.com/admin/login
+- **Citizen Portal:** [https://mrirrelevant.pythonanywhere.com/](https://mrirrelevant.pythonanywhere.com/)
+- **Admin Portal (Hidden):** [https://mrirrelevant.pythonanywhere.com/admin/login](https://mrirrelevant.pythonanywhere.com/admin/login)
 
+---
 
-## Key Features
-
-### Citizen Portal
-=======
 ##  Key Features
 
 ###  Citizen Portal
@@ -37,28 +33,26 @@ A modern, secure web application designed for the **Murang'a County Government**
 * **In-App Notifications:** Bell icon with unread counts; citizens are automatically notified upon submission and every status change.
 * **Fullscreen Lightbox:** Click-to-zoom photo viewer for inspecting attached evidence.
 
-### Administrator Portal (Hidden URL)
-=======
 ###  Administrator Portal (Hidden URL)
-
-* **Analytics Dashboard:** Horizontal progress bars (Open vs. Resolved, Requests by Category).
+* **Analytics Dashboard:** Clean horizontal progress bars (Open vs. Resolved, Requests by Category, Cases per Sub-County).
 * **SLA & Overdue Tracking:** Automatic red flagging and dashboard counters for requests open longer than 7 days.
-* **Request Queue:** Filtering by status, category, and sub-county, plus free-text search.
+* **Request Queue:** Advanced filtering by status, category, and sub-county, plus free-text search.
 * **Enforced Workflow:** Server-side status progression (Pending → In Progress → Resolved) with a complete audit trail.
-* **Data Export:** One-click CSV download of the filtered queue.
-* **Smart Routing:** Admins who use the citizen login page are redirected to the admin portal.
+* **Data Export:** One-click CSV download of the filtered queue for county reporting.
+* **Smart Routing:** Admins who accidentally use the citizen login page are safely redirected to the admin portal.
 
+---
 
-## Tech Stack
-=======
 ##  Tech Stack
 * **Backend:** Python 3.10+, Flask, Flask-SQLAlchemy (SQLite)
 * **Frontend:** Bootstrap 5, Bootstrap Icons (via CDN)
 * **Security:** Werkzeug password hashing, Flask-WTF (CSRF protection), strict file upload validation, role-based access control (RBAC)
 
-## Project Structure
+---
+
+##  Project Structure
 ```text
-psr-system/
+psr-/
 ├── run.py                  # Application entry point
 ├── create_admin.py         # CLI tool to seed/promote admin accounts
 ├── requirements.txt        # Python dependencies
@@ -69,11 +63,10 @@ psr-system/
     ├── __init__.py         # App factory, config, and error handlers
     ├── models.py           # Database models and workflow constants
     ├── utils.py            # Shared helpers (image saving, validation)
-    ├── citizen/            # Blueprint: citizen routes, forms
+    ├── citizen/            # Blueprint: citizen routes, forms, templates
     ├── admin/              # Blueprint: admin routes, analytics, queue
     ├── templates/          # Jinja2 HTML (partials, errors, role-specific)
-    └── static/css/         # Custom CSS overrides
-```
+    └── static/             # Custom CSS and images (e.g., county logo)
 
 ##  Installation & Setup
 
