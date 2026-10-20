@@ -3,247 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSR Admin Portal · Murang'a County</title>
+    <title>Administrator Login · Murang'a County PSR</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        /* Exact styling to match the official Murang'a County Citizen portal */
+        body { 
+            background-color: #f0f4f8; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             margin: 0;
-            padding: 20px;
         }
-        .login-container {
-            max-width: 480px;
-            width: 100%;
+        .auth-card { 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            padding: 40px 50px; 
+            max-width: 520px; 
+            width: 90%; 
+            border-top: 5px solid #1e3a8a; /* Dark blue top border for Admin distinction */
         }
-        .logo-header {
-            text-align: center;
-            margin-bottom: 30px;
+        .logo-img { max-width: 90px; margin-bottom: 15px; }
+        .auth-title { color: #1e3a8a; font-weight: 800; font-size: 2.2rem; margin-bottom: 5px; letter-spacing: -0.5px; }
+        .auth-subtitle { color: #1d4ed8; font-weight: 600; font-size: 1.15rem; margin-bottom: 5px; }
+        .auth-subtitle-2 { color: #6b7280; font-size: 0.95rem; margin-bottom: 35px; }
+        
+        .form-label { font-weight: 600; color: #374151; margin-bottom: 8px; font-size: 0.95rem; }
+        .form-control { 
+            border-radius: 8px; 
+            padding: 12px 16px; 
+            border: 1px solid #d1d5db; 
+            font-size: 1rem; 
+            transition: all 0.2s;
         }
-        .logo-header img {
-            max-width: 100px;
-            margin-bottom: 15px;
+        .form-control:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15); outline: none; }
+        
+        .btn-signin { 
+            background-color: #1d4ed8; 
+            color: white; 
+            border-radius: 8px; 
+            padding: 14px; 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            width: 100%; 
+            border: none; 
+            margin-top: 15px; 
+            transition: background 0.2s;
         }
-        .portal-title {
-            color: #166534;
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 5px;
-            letter-spacing: -0.5px;
+        .btn-signin:hover { background-color: #1e40af; color: white; }
+        
+        .auth-links { display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.9rem; }
+        .auth-links a { color: #1d4ed8; text-decoration: none; font-weight: 500; }
+        .auth-links a:hover { text-decoration: underline; }
+        
+        .auth-footer { 
+            text-align: center; 
+            margin-top: 30px; 
+            padding-top: 20px; 
+            border-top: 1px solid #e5e7eb; 
+            color: #4b5563; 
+            font-size: 0.9rem; 
+            line-height: 1.5;
         }
-        .county-name {
-            color: #15803d;
-            font-size: 1.15rem;
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-        .board-name {
-            color: #6b7280;
-            font-size: 0.95rem;
-            margin-bottom: 0;
-        }
-        .login-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(22, 101, 52, 0.15);
-            border-top: 4px solid #16a34a;
-            padding: 40px 35px;
-        }
-        .card-title {
-            color: #1e293b;
-            font-size: 1.6rem;
+        .auth-footer a { color: #1d4ed8; text-decoration: none; font-weight: 500; display: inline-block; margin-top: 10px;}
+        
+        /* Subtle badge to show it's the secure admin side */
+        .admin-badge {
+            display: inline-block;
+            background-color: #e0e7ff;
+            color: #1e3a8a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .card-subtitle {
-            color: #6b7280;
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-        .input-group {
-            position: relative;
-        }
-        .input-group .form-control {
-            padding-left: 45px;
-            border-radius: 10px;
-            border: 1.5px solid #d1d5db;
-            height: 50px;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        .input-group .form-control:focus {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1);
-            outline: none;
-        }
-        .input-group-text {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            color: #9ca3af;
-            font-size: 1.1rem;
-            z-index: 10;
-            padding: 0 15px;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            color: #9ca3af;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 0;
-        }
-        .password-toggle:hover {
-            color: #16a34a;
-        }
-        .forgot-link {
-            float: right;
-            color: #16a34a;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-        .forgot-link:hover {
-            color: #15803d;
-            text-decoration: underline;
-        }
-        .btn-signin {
-            background-color: #16a34a;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 14px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            height: 52px;
-            margin-top: 10px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .btn-signin:hover {
-            background-color: #15803d;
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
-        }
-        .footer-links {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 1px solid #e5e7eb;
-        }
-        .footer-links p {
-            color: #6b7280;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .footer-links a {
-            color: #16a34a;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .footer-links a:hover {
-            color: #15803d;
-            text-decoration: underline;
-        }
-        .footer-small {
-            font-size: 0.85rem;
-            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo-header">
-            <!-- Ensure you have the logo saved at app/static/img/muranga-logo.png -->
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="">
-            <h1 class="portal-title">PSR Admin Portal</h1>
-            <p class="county-name">Murang'a County Government</p>
-            <p class="board-name">Public Service Request</p>
+    <div class="auth-card">
+        <div class="text-center">
+            <!-- Make sure you saved the logo as app/static/img/muranga-logo.png -->
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="logo-img">
+            <div class="admin-badge"><i class="bi bi-shield-lock-fill"></i> Restricted Access</div>
+            <h1 class="auth-title">Administrator Login</h1>
+            <p class="auth-subtitle">Murang'a County Government</p>
+            <p class="auth-subtitle-2">County Administration Portal</p>
         </div>
 
-        <div class="login-card">
-            <h2 class="card-title">Sign in to your account</h2>
-            <p class="card-subtitle">Enter your credentials to access the admin dashboard.</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} py-2 small text-center">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} py-2 small">{{ message }}</div>
-                {% endfor %}
-            {% endwith %}
-
-            <form method="post" novalidate>
-                {{ form.hidden_tag() }}
-                
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        {{ form.email(class="form-control", placeholder="admin@muranga.go.ke") }}
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        {{ form.password(class="form-control", placeholder="Enter your password", id="password") }}
-                        <button type="button" class="password-toggle" onclick="togglePassword()">
-                            <i class="bi bi-eye" id="toggleIcon"></i>
-                        </button>
-                    </div>
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
-
-                <button type="submit" class="btn btn-signin">
-                    <i class="bi bi-box-arrow-in-right"></i> Sign In
-                </button>
-            </form>
-
-            <div class="footer-links">
-                
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control", placeholder="admin@muranga.go.ke") }}
             </div>
+            <div class="mb-3">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control", placeholder="••••••••") }}
+            </div>
+
+            {{ form.submit(class="btn btn-signin", value="Secure Sign In") }}
+        </form>
+
+        <div class="auth-footer">
+            <i class="bi bi-lock-fill"></i> Authorized personnel only. All access is logged and monitored.
+            <br>
+            <a href="{{ url_for('citizen.index') }}">&larr; Back to Citizen Portal</a>
         </div>
     </div>
-
-    <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggleIcon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('bi-eye');
-                toggleIcon.classList.add('bi-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('bi-eye-slash');
-                toggleIcon.classList.add('bi-eye');
-            }
-        }
-    </script>
 </body>
 </html>
