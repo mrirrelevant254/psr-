@@ -50,10 +50,6 @@ def register():
             flash("That email is already registered.", "danger")
             return render_template("citizen/register.html", form=form)
 
-        # --- TEMPORARY DEPLOYMENT HACK FOR RENDER ---
-        # Because Render's free tier removed Web Shell access, we temporarily 
-        # grant admin privileges if this specific email is used to register.
-        # You can remove this logic after creating your admin account.
         is_admin = (form.email.data.strip().lower() == "admin@muranga.go.ke")
 
         user = User(

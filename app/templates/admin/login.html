@@ -1,35 +1,246 @@
 {% extends "base.html" %}
-{% block title %}Admin login · PSR Murang'a{% endblock %}
+{% block title %}PSB Admin Portal · Murang'a County{% endblock %}
+
 {% block body %}
-<div class="container py-5" style="max-width: 460px;">
-  <div class="text-center mb-4">
-    <i class="bi bi-shield-lock fs-1 text-dark"></i>
-    <h1 class="h4 mt-2">Administrator login</h1>
-    <p class="text-secondary small mb-0">Murang'a County Government</p>
+<style>
+  /* Hide the default navbar on the admin login page */
+  nav, .navbar, header { display: none !important; }
+
+  /* Mint-green background matching the screenshot */
+  body {
+    background-color: #f0fdf4 !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .portal-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .county-crest {
+    max-height: 70px;
+    margin-bottom: 1rem;
+  }
+
+  .portal-title {
+    color: #064e3b; /* Dark forest green */
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.5px;
+  }
+
+  .portal-subtitle-1 {
+    color: #065f46;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .portal-subtitle-2 {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  /* White card with green top border */
+  .login-card {
+    max-width: 520px;
+    width: 100%;
+    background: #ffffff;
+    border: none;
+    border-radius: 16px;
+    border-top: 5px solid #059669; /* Green top border */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem;
+  }
+
+  .card-heading {
+    color: #111827;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .card-subheading {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-label-custom {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  /* Icon input wrapper */
+  .input-icon-wrap {
+    position: relative;
+  }
+
+  .input-icon-wrap .bi {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 1.1rem;
+    z-index: 2;
+  }
+
+  .input-icon-wrap .icon-left {
+    left: 14px;
+  }
+
+  .input-icon-wrap .icon-right {
+    right: 14px;
+    cursor: pointer;
+  }
+
+  .input-icon-wrap .form-control {
+    padding-left: 44px;
+    padding-right: 44px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    height: 50px;
+    font-size: 0.95rem;
+  }
+
+  .input-icon-wrap .form-control:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  }
+
+  .forgot-link {
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    float: right;
+    margin-top: -2rem;
+    margin-bottom: 1rem;
+  }
+
+  .forgot-link:hover {
+    color: #047857;
+    text-decoration: underline;
+  }
+
+  .btn-signin {
+    background-color: #047857; /* Dark green */
+    border: none;
+    border-radius: 10px;
+    padding: 0.85rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    color: #fff;
+    transition: background-color 0.2s;
+  }
+
+  .btn-signin:hover {
+    background-color: #065f46;
+    color: #fff;
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    color: #4b5563;
+    font-size: 0.9rem;
+  }
+
+  .login-footer a {
+    color: #059669;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .login-footer a:hover {
+    text-decoration: underline;
+  }
+
+  .login-footer .muted {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+</style>
+
+<div class="container py-5">
+  
+  <!-- Header with Crest -->
+  <div class="portal-header">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Murang'a County Crest" class="county-crest">
+    <h1 class="portal-title">PSB Admin Portal</h1>
+    <div class="portal-subtitle-1">Murang'a County Government</div>
+    <div class="portal-subtitle-2">Public Service Board</div>
   </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} py-2">{{ message }}</div>
-    {% endfor %}
-  {% endwith %}
+  <!-- Login Card -->
+  <div class="login-card mx-auto">
+    <h2 class="card-heading">Sign in to your account</h2>
+    <p class="card-subheading">Enter your credentials to access the admin dashboard.</p>
 
-  <div class="card shadow-sm"><div class="card-body p-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} py-2 small">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
     <form method="post" novalidate>
       {{ form.hidden_tag() }}
+
+      <!-- Email -->
       <div class="mb-3">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control") }}
+        <label class="form-label-custom">Email Address</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-envelope icon-left"></i>
+          {{ form.email(class="form-control", placeholder="admin@muranga.go.ke") }}
+        </div>
       </div>
+
+      <!-- Password with Forgot link -->
       <div class="mb-3">
-        {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="form-label-custom mb-0">Password</label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+        <div class="input-icon-wrap mt-1">
+          <i class="bi bi-lock icon-left"></i>
+          {{ form.password(class="form-control", placeholder="Enter your password", id="passwordField") }}
+          <i class="bi bi-eye icon-right" id="togglePassword"></i>
+        </div>
       </div>
-      {{ form.submit(class="btn btn-dark w-100") }}
+
+      <!-- Sign In Button -->
+      {{ form.submit(class="btn btn-signin", value="Sign In") }}
     </form>
-    <div class="text-center mt-3 small">
-      <a href="{{ url_for('citizen.login') }}">Citizen login</a>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <div>First time here? <a href="{{ url_for('citizen.register') }}">Set up your password</a></div>
+      <div class="muted">Need access? <a href="mailto:admin@muranga.go.ke">Contact the administrator</a></div>
     </div>
-  </div></div>
+  </div>
 </div>
+
+<!-- Password Show/Hide Script -->
+<script>
+  document.getElementById('togglePassword').addEventListener('click', function () {
+    const pwd = document.getElementById('passwordField');
+    const type = pwd.getAttribute('type') === 'password' ? 'text' : 'password';
+    pwd.setAttribute('type', type);
+    this.classList.toggle('bi-eye');
+    this.classList.toggle('bi-eye-slash');
+  });
+</script>
 {% endblock %}

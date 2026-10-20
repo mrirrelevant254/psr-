@@ -34,8 +34,6 @@ class RequestForm(FlaskForm):
     location = StringField("Location", validators=[DataRequired(), Length(max=200)])
     description = TextAreaField("Description", validators=[DataRequired(), Length(max=2000)])
 
-    # Optional photo: FileAllowed alone keeps the field optional
-    # (FileRequired() would force an upload).
     image = FileField(
         "Photo (optional)",
         validators=[FileAllowed(IMAGE_EXTENSIONS,
@@ -51,11 +49,11 @@ class RequestForm(FlaskForm):
            so a renamed .exe or .txt is rejected even if its extension lies.
         """
         if field.data is None or not field.data.filename:
-            return                                    # nothing uploaded -> fine
+            return                                    
         if not (field.data.mimetype or "").startswith("image/"):
             raise ValidationError("Only image files are allowed.")
         header = field.data.stream.read(12)
-        field.data.stream.seek(0)                     # rewind for saving later
+        field.data.stream.seek(0)                     
         is_png = header[:4] == b"\x89PNG"
         is_jpg = header[:3] == b"\xff\xd8\xff"
         is_webp = header[:4] == b"RIFF" and header[8:12] == b"WEBP"

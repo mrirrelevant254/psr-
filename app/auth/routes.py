@@ -45,9 +45,7 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             flash(f"Welcome back, {user.full_name}!", "success")
-            # Admins land on their dashboard (exists from Milestone 4).
             home = url_for("admin.dashboard") if user.is_admin else url_for("citizen.dashboard")
-            # Honour Flask-Login's ?next= but never redirect off-site.
             next_page = request.args.get("next")
             if next_page and next_page.startswith("/"):
                 return redirect(next_page)
